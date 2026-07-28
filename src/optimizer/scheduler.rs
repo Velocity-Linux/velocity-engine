@@ -1,14 +1,18 @@
 use crate::config::types::ProfileConfig;
-use crate::error::{EngineError, Result};
+use crate::error::EngineError;
 use crate::optimizer::{OptimizationState, Optimizer};
-use async_trait::async_trait;
 
 #[derive(Debug, Clone, Default)]
 pub struct SchedulerOptimizer;
 
-#[async_trait]
+#[async_trait::async_trait]
 impl Optimizer for SchedulerOptimizer {
-    async fn apply(&mut self, profile: &ProfileConfig, _pids: &[u32], state: &mut OptimizationState) -> Result<()> {
+    async fn apply(
+        &mut self,
+        profile: &ProfileConfig,
+        _pids: &[u32],
+        state: &mut OptimizationState,
+    ) -> crate::error::Result<()> {
         if let Some(scheduler) = &profile.scheduler {
             let current = Self::get_current_scheduler();
             if current.as_deref() != Some(scheduler) {
@@ -21,7 +25,7 @@ impl Optimizer for SchedulerOptimizer {
         Ok(())
     }
 
-    async fn restore(&self, state: &OptimizationState) -> Result<()> {
+    async fn restore(&self, state: &OptimizationState) -> crate::error::Result<()> {
         if let Some(scheduler) = &state.scheduler {
             Self::set_scheduler(scheduler)
                 .map_err(|e| EngineError::Optimizer(format!("Cannot restore scheduler: {}", e)))?;

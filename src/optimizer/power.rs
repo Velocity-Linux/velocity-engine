@@ -1,14 +1,18 @@
 use crate::config::types::ProfileConfig;
-use crate::error::{EngineError, Result};
+use crate::error::EngineError;
 use crate::optimizer::{OptimizationState, Optimizer};
-use async_trait::async_trait;
 
 #[derive(Debug, Clone, Default)]
 pub struct PowerOptimizer;
 
-#[async_trait]
+#[async_trait::async_trait]
 impl Optimizer for PowerOptimizer {
-    async fn apply(&mut self, profile: &ProfileConfig, _pids: &[u32], state: &mut OptimizationState) -> Result<()> {
+    async fn apply(
+        &mut self,
+        profile: &ProfileConfig,
+        _pids: &[u32],
+        state: &mut OptimizationState,
+    ) -> crate::error::Result<()> {
         if let Some(power_profile) = &profile.power_profile {
             let current = Self::get_current_power_profile();
             if current.as_deref() != Some(power_profile) {
@@ -21,7 +25,7 @@ impl Optimizer for PowerOptimizer {
         Ok(())
     }
 
-    async fn restore(&self, state: &OptimizationState) -> Result<()> {
+    async fn restore(&self, state: &OptimizationState) -> crate::error::Result<()> {
         if let Some(power_profile) = &state.power_profile {
             Self::set_power_profile(power_profile)
                 .map_err(|e| EngineError::Optimizer(format!("Cannot restore power profile: {}", e)))?;

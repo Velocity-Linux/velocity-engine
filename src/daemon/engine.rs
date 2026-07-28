@@ -1,13 +1,12 @@
-use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
-use crate::config::types::{Config, GameRule, ProfileConfig};
-use crate::daemon::service::DaemonService;
+use crate::config::types::{Config, GameRule};
 use crate::detector::GameDetector;
 use crate::error::Result;
-use crate::optimizer::{OptimizationState, OptimizerManager};
+use crate::optimizer::OptimizerManager;
 use crate::profiles::ProfileManager;
+use crate::system::SystemUtils;
 
 pub struct DaemonEngine {
     config: Config,

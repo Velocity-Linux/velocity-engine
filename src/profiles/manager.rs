@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use crate::config::types::{GameRule, ProfileConfig};
-use crate::error::Result;
 
 pub struct ProfileManager {
     profiles: HashMap<String, ProfileConfig>,

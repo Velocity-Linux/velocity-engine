@@ -55,10 +55,10 @@ impl ConfigLoader {
     }
 
     pub async fn watch_for_changes(&self) {
-        let rx = channel();
-        let _ = rx;
+        let (tx, rx) = channel();
+        let _ = tx;
         loop {
-            if let Ok(_) = std::sync::mpsc::recv_timeout(&rx, Duration::from_millis(100)) {
+            if let Ok(_) = rx.recv_timeout(Duration::from_millis(100)) {
                 if let Err(e) = self.reload().await {
                     error!("Failed to reload config: {}", e);
                 }

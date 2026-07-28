@@ -1,4 +1,4 @@
-use tracing::{debug, error, info, trace, warn};
+use tracing::{info, warn};
 use tracing_journald::JournaldWriter;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
