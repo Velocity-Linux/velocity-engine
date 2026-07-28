@@ -122,9 +122,16 @@ impl SystemUtils {
         }
 
         unsafe {
-            let res = libc::sched_setaffinity(pid, std::mem::size_of::<u64>(), &mask as *const u64 as *const libc::c_void);
+            let res = libc::sched_setaffinity(
+                pid,
+                std::mem::size_of::<u64>(),
+                &mask as *const u64 as *const libc::c_void,
+            );
             if res != 0 {
-                return Err(format!("sched_setaffinity failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "sched_setaffinity failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         debug!("Set CPU affinity for PID {} to {:?}", pid, cpus);
@@ -135,7 +142,10 @@ impl SystemUtils {
         unsafe {
             let res = libc::setpriority(libc::PRIO_PROCESS, pid, priority);
             if res != 0 {
-                return Err(format!("setpriority failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "setpriority failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         debug!("Set priority for PID {} to {}", pid, priority);
@@ -151,9 +161,17 @@ impl SystemUtils {
         };
 
         unsafe {
-            let res = libc::syscall(libc::SYS_ioprio_set, 1, pid, ioprio_data);
+            let res = libc::syscall(
+                libc::SYS_ioprio_set,
+                1,
+                pid,
+                ioprio_data,
+            );
             if res != 0 {
-                return Err(format!("ioprio_set failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "ioprio_set failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         debug!("Set I/O priority for PID {} to {}", pid, class);

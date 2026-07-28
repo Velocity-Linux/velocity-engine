@@ -16,8 +16,9 @@ impl Optimizer for PowerOptimizer {
         if let Some(power_profile) = &profile.power_profile {
             let current = Self::get_current_power_profile();
             if current.as_deref() != Some(power_profile) {
-                Self::set_power_profile(power_profile)
-                    .map_err(|e| EngineError::Optimizer(format!("Cannot set power profile: {}", e)))?;
+                Self::set_power_profile(power_profile).map_err(|e| {
+                    EngineError::Optimizer(format!("Cannot set power profile: {}", e))
+                })?;
                 state.power_profile = current;
                 info!("Power profile set to {}", power_profile);
             }
@@ -27,8 +28,9 @@ impl Optimizer for PowerOptimizer {
 
     async fn restore(&self, state: &OptimizationState) -> crate::error::Result<()> {
         if let Some(power_profile) = &state.power_profile {
-            Self::set_power_profile(power_profile)
-                .map_err(|e| EngineError::Optimizer(format!("Cannot restore power profile: {}", e)))?;
+            Self::set_power_profile(power_profile).map_err(|e| {
+                EngineError::Optimizer(format!("Cannot restore power profile: {}", e))
+            })?;
             info!("Power profile restored to {}", power_profile);
         }
         Ok(())

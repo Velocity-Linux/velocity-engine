@@ -16,8 +16,9 @@ impl Optimizer for SchedulerOptimizer {
         if let Some(scheduler) = &profile.scheduler {
             let current = Self::get_current_scheduler();
             if current.as_deref() != Some(scheduler) {
-                Self::set_scheduler(scheduler)
-                    .map_err(|e| EngineError::Optimizer(format!("Cannot set scheduler: {}", e)))?;
+                Self::set_scheduler(scheduler).map_err(|e| {
+                    EngineError::Optimizer(format!("Cannot set scheduler: {}", e))
+                })?;
                 state.scheduler = current;
                 info!("Scheduler set to {}", scheduler);
             }
@@ -27,8 +28,9 @@ impl Optimizer for SchedulerOptimizer {
 
     async fn restore(&self, state: &OptimizationState) -> crate::error::Result<()> {
         if let Some(scheduler) = &state.scheduler {
-            Self::set_scheduler(scheduler)
-                .map_err(|e| EngineError::Optimizer(format!("Cannot restore scheduler: {}", e)))?;
+            Self::set_scheduler(scheduler).map_err(|e| {
+                EngineError::Optimizer(format!("Cannot restore scheduler: {}", e))
+            })?;
             info!("Scheduler restored to {}", scheduler);
         }
         Ok(())
@@ -48,12 +50,10 @@ impl SchedulerOptimizer {
     fn set_scheduler(scheduler: &str) -> Result<(), String> {
         match scheduler {
             "default" | "normal" => {
-                crate::system::SystemUtils::run_command("chrt", &["-d", "0", "0"])
-                    .map(|_| ())
+                crate::system::SystemUtils::run_command("chrt", &["-d", "0", "0"]).map(|_| ())
             }
             "batch" => {
-                crate::system::SystemUtils::run_command("chrt", &["-b", "0", "0"])
-                    .map(|_| ())
+                crate::system::SystemUtils::run_command("chrt", &["-b", "0", "0"]).map(|_| ())
             }
             _ => Err(format!("Unknown scheduler: {}", scheduler)),
         }

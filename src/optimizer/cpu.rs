@@ -16,8 +16,9 @@ impl CpuOptimizer {
         if let Some(governor) = &profile.cpu_governor {
             let current = SystemUtils::get_current_cpu_governor();
             if current.as_deref() != Some(governor) {
-                SystemUtils::set_cpu_governor(governor)
-                    .map_err(|e| EngineError::Optimizer(format!("Cannot set CPU governor: {}", e)))?;
+                SystemUtils::set_cpu_governor(governor).map_err(|e| {
+                    EngineError::Optimizer(format!("Cannot set CPU governor: {}", e))
+                })?;
                 state.cpu_governor = current;
                 info!("CPU governor set to {}", governor);
             }
@@ -27,8 +28,9 @@ impl CpuOptimizer {
             for pid in pids {
                 let current = SystemUtils::get_cpu_affinity(*pid);
                 if current != *affinity {
-                    SystemUtils::set_cpu_affinity(*pid, affinity)
-                        .map_err(|e| EngineError::Optimizer(format!("Cannot set CPU affinity: {}", e)))?;
+                    SystemUtils::set_cpu_affinity(*pid, affinity).map_err(|e| {
+                        EngineError::Optimizer(format!("Cannot set CPU affinity: {}", e))
+                    })?;
                     state.cpu_affinity.insert(*pid, current);
                     debug!("Set CPU affinity for PID {} to {:?}", pid, affinity);
                 }
@@ -40,14 +42,16 @@ impl CpuOptimizer {
 
     async fn restore_impl(&self, state: &OptimizationState) -> crate::error::Result<()> {
         if let Some(governor) = &state.cpu_governor {
-            SystemUtils::set_cpu_governor(governor)
-                .map_err(|e| EngineError::Optimizer(format!("Cannot restore CPU governor: {}", e)))?;
+            SystemUtils::set_cpu_governor(governor).map_err(|e| {
+                EngineError::Optimizer(format!("Cannot restore CPU governor: {}", e))
+            })?;
             info!("CPU governor restored to {}", governor);
         }
 
         for (pid, affinity) in &state.cpu_affinity {
-            SystemUtils::set_cpu_affinity(*pid, affinity)
-                .map_err(|e| EngineError::Optimizer(format!("Cannot restore CPU affinity: {}", e)))?;
+            SystemUtils::set_cpu_affinity(*pid, affinity).map_err(|e| {
+                EngineError::Optimizer(format!("Cannot restore CPU affinity: {}", e))
+            })?;
         }
 
         Ok(())

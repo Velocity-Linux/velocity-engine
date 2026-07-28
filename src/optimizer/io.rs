@@ -26,15 +26,19 @@ impl Optimizer for IoOptimizer {
                 };
 
                 if current_priority != priority {
-                    SystemUtils::set_process_priority(*pid, priority)
-                        .map_err(|e| EngineError::Optimizer(format!("Cannot set process priority: {}", e)))?;
+                    SystemUtils::set_process_priority(*pid, priority).map_err(|e| {
+                        EngineError::Optimizer(format!("Cannot set process priority: {}", e))
+                    })?;
                     state.process_priorities.insert(*pid, current_priority);
                     debug!("Set priority for PID {} to {}", pid, priority);
                 }
 
-                SystemUtils::set_io_priority(*pid, io_class, priority)
-                    .map_err(|e| EngineError::Optimizer(format!("Cannot set I/O priority: {}", e)))?;
-                state.io_priorities.insert(*pid, (io_class.clone(), priority));
+                SystemUtils::set_io_priority(*pid, io_class, priority).map_err(|e| {
+                    EngineError::Optimizer(format!("Cannot set I/O priority: {}", e))
+                })?;
+                state
+                    .io_priorities
+                    .insert(*pid, (io_class.clone(), priority));
                 debug!("Set I/O priority for PID {} to {}", pid, io_class);
             }
         }
