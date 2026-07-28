@@ -161,12 +161,7 @@ impl SystemUtils {
         };
 
         unsafe {
-            let res = libc::syscall(
-                libc::SYS_ioprio_set,
-                1,
-                pid,
-                ioprio_data,
-            );
+            let res = libc::syscall(libc::SYS_ioprio_set, 1, pid, ioprio_data);
             if res != 0 {
                 return Err(format!(
                     "ioprio_set failed: {}",
