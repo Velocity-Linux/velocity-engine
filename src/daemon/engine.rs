@@ -23,8 +23,7 @@ impl DaemonEngine {
     pub async fn new(config: Config) -> Result<Self> {
         info!("Initializing Velocity Engine daemon");
 
-        let profile_manager =
-            ProfileManager::new(config.profiles.clone(), config.games.clone());
+        let profile_manager = ProfileManager::new(config.profiles.clone(), config.games.clone());
         let detector = GameDetector::new(config.games.clone());
         let optimizer = OptimizerManager::new();
 
@@ -54,8 +53,15 @@ impl DaemonEngine {
             if !active_games.contains(&game.name) {
                 active_games.push(game.name.clone());
 
-                let profile = self.profile_manager.get_profile(&game.profile)
-                    .ok_or_else(|| crate::error::EngineError::Profile(format!("Profile not found: {}", game.profile)))?;
+                let profile = self
+                    .profile_manager
+                    .get_profile(&game.profile)
+                    .ok_or_else(|| {
+                        crate::error::EngineError::Profile(format!(
+                            "Profile not found: {}",
+                            game.profile
+                        ))
+                    })?;
 
                 let pids = self.get_game_pids(&game).await;
                 self.optimizer.apply_profile(profile, &pids).await?;
@@ -65,7 +71,10 @@ impl DaemonEngine {
                 self.states.write().await.push((game.name.clone(), state));
 
                 *active_profile = game.profile.clone();
-                info!("Optimizations applied for {} with profile '{}'", game.name, game.profile);
+                info!(
+                    "Optimizations applied for {} with profile '{}'",
+                    game.name, game.profile
+                );
             }
         }
 
@@ -73,10 +82,14 @@ impl DaemonEngine {
     }
 
     pub async fn game_started(&self, game_name: &str, profile: &str) -> Result<()> {
-        info!("Game started via plugin: {} with profile '{}'", game_name, profile);
+        info!(
+            "Game started via plugin: {} with profile '{}'",
+            game_name, profile
+        );
         let pids = self.get_pids_for_game_name(game_name).await;
-        let profile_config = self.profile_manager.get_profile(profile)
-            .ok_or_else(|| crate::error::EngineError::Profile(format!("Profile not found: {}", profile)))?;
+        let profile_config = self.profile_manager.get_profile(profile).ok_or_else(|| {
+            crate::error::EngineError::Profile(format!("Profile not found: {}", profile))
+        })?;
 
         self.optimizer.apply_profile(profile_config, &pids).await?;
         *self.active_profile.write().await = profile.to_string();
@@ -106,8 +119,9 @@ impl DaemonEngine {
 
     pub async fn activate_profile(&self, profile: &str) -> Result<()> {
         info!("Manually activating profile: {}", profile);
-        let profile_config = self.profile_manager.get_profile(profile)
-            .ok_or_else(|| crate::error::EngineError::Profile(format!("Profile not found: {}", profile)))?;
+        let profile_config = self.profile_manager.get_profile(profile).ok_or_else(|| {
+            crate::error::EngineError::Profile(format!("Profile not found: {}", profile))
+        })?;
 
         let pids = self.get_all_game_pids().await;
         self.optimizer.apply_profile(profile_config, &pids).await?;
@@ -116,7 +130,11 @@ impl DaemonEngine {
     }
 
     pub async fn list_games(&self) -> Vec<String> {
-        self.profile_manager.list_games().iter().map(|s| s.to_string()).collect()
+        self.profile_manager
+            .list_games()
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
     }
 
     pub async fn list_profiles(&self) -> Vec<String> {

@@ -1,5 +1,5 @@
-use tracing::{info, warn, error, debug, trace};
-use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+use tracing::{debug, error, info, trace, warn};
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 use tracing_journald::JournaldWriter;
 
 use crate::config::types::LoggingConfig;
@@ -16,7 +16,10 @@ pub fn init(config: &LoggingConfig) -> Result<()> {
                     .with(tracing_journald::layer().with_writer(journald_writer));
 
                 if let Err(e) = tracing::subscriber::set_global_default(subscriber) {
-                    warn!("Cannot set journald subscriber: {}, falling back to stderr", e);
+                    warn!(
+                        "Cannot set journald subscriber: {}, falling back to stderr",
+                        e
+                    );
                     init_stderr(filter, config.format)?;
                 }
             }

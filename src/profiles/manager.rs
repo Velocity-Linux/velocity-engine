@@ -10,8 +10,12 @@ pub struct ProfileManager {
 
 impl ProfileManager {
     pub fn new(profiles: HashMap<String, ProfileConfig>, games: Vec<GameRule>) -> Self {
-        let games_map: HashMap<String, GameRule> = games.into_iter().map(|g| (g.name.clone(), g)).collect();
-        Self { profiles, games: games_map }
+        let games_map: HashMap<String, GameRule> =
+            games.into_iter().map(|g| (g.name.clone(), g)).collect();
+        Self {
+            profiles,
+            games: games_map,
+        }
     }
 
     pub fn get_profile(&self, name: &str) -> Option<&ProfileConfig> {

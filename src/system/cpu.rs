@@ -46,9 +46,7 @@ impl SystemUtils {
                         let process_name = cmdline_str
                             .split('\0')
                             .next()
-                            .and_then(|s| {
-                                s.rsplit('/').next().map(|s| s.to_string())
-                            })
+                            .and_then(|s| s.rsplit('/').next().map(|s| s.to_string()))
                             .unwrap_or_default();
                         if !process_name.is_empty() {
                             processes.push((pid, process_name));
@@ -124,9 +122,16 @@ impl SystemUtils {
         }
 
         unsafe {
-            let res = libc::sched_setaffinity(pid, std::mem::size_of::<u64>(), &mask as *const u64 as *const libc::c_void);
+            let res = libc::sched_setaffinity(
+                pid,
+                std::mem::size_of::<u64>(),
+                &mask as *const u64 as *const libc::c_void,
+            );
             if res != 0 {
-                return Err(format!("sched_setaffinity failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "sched_setaffinity failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         debug!("Set CPU affinity for PID {} to {:?}", pid, cpus);
@@ -137,7 +142,10 @@ impl SystemUtils {
         unsafe {
             let res = libc::setpriority(libc::PRIO_PROCESS, pid, priority);
             if res != 0 {
-                return Err(format!("setpriority failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "setpriority failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         debug!("Set priority for PID {} to {}", pid, priority);
@@ -146,16 +154,33 @@ impl SystemUtils {
 
     pub fn set_io_priority(pid: u32, class: &str, priority: i32) -> Result<(), String> {
         let (ioprio_class, ioprio_data) = match class {
-            "realtime" => (libc::IOPRIO_CLASS_RT, libc::IOPRIO_PRIO_VALUE(libc::IOPRIO_CLASS_RT, priority.clamp(0, 7))),
-            "best-effort" => (libc::IOPRIO_CLASS_BE, libc::IOPRIO_PRIO_VALUE(libc::IOPRIO_CLASS_BE, priority.clamp(0, 7))),
-            "idle" => (libc::IOPRIO_CLASS_IDLE, libc::IOPRIO_PRIO_VALUE(libc::IOPRIO_CLASS_IDLE, 0)),
+            "realtime" => (
+                libc::IOPRIO_CLASS_RT,
+                libc::IOPRIO_PRIO_VALUE(libc::IOPRIO_CLASS_RT, priority.clamp(0, 7)),
+            ),
+            "best-effort" => (
+                libc::IOPRIO_CLASS_BE,
+                libc::IOPRIO_PRIO_VALUE(libc::IOPRIO_CLASS_BE, priority.clamp(0, 7)),
+            ),
+            "idle" => (
+                libc::IOPRIO_CLASS_IDLE,
+                libc::IOPRIO_PRIO_VALUE(libc::IOPRIO_CLASS_IDLE, 0),
+            ),
             _ => return Err(format!("Unknown I/O priority class: {}", class)),
         };
 
         unsafe {
-            let res = libc::syscall(libc::SYS_ioprio_set, libc::IOPRIO_WHO_PROCESS, pid, ioprio_data);
+            let res = libc::syscall(
+                libc::SYS_ioprio_set,
+                libc::IOPRIO_WHO_PROCESS,
+                pid,
+                ioprio_data,
+            );
             if res != 0 {
-                return Err(format!("ioprio_set failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "ioprio_set failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         debug!("Set I/O priority for PID {} to {}", pid, class);
@@ -168,7 +193,9 @@ impl SystemUtils {
             if part.contains('-') {
                 let range: Vec<&str> = part.split('-').collect();
                 if range.len() == 2 {
-                    if let (Ok(start), Ok(end)) = (range[0].parse::<usize>(), range[1].parse::<usize>()) {
+                    if let (Ok(start), Ok(end)) =
+                        (range[0].parse::<usize>(), range[1].parse::<usize>())
+                    {
                         cpus.extend(start..=end);
                     }
                 }

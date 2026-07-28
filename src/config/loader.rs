@@ -1,6 +1,7 @@
-use super::types::{Config, DaemonConfig, GameRule, LoggingConfig, PluginConfig, ProfileConfig};
 use crate::error::{EngineError, Result};
-use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher, Event as NotifyEvent};
+use notify::{
+    Config, Event as NotifyEvent, RecommendedWatcher, RecursiveMode, Watcher,
+};
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::time::Duration;
