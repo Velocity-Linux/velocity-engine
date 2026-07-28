@@ -28,9 +28,7 @@ enum Commands {
 #[derive(Subcommand)]
 enum ProfileAction {
     List,
-    Activate {
-        name: String,
-    },
+    Activate { name: String },
 }
 
 #[derive(Subcommand)]
@@ -157,9 +155,7 @@ async fn main() {
             match conn {
                 Ok(conn) => match action {
                     ProfileAction::List => handle_profile_list(&conn).await,
-                    ProfileAction::Activate { name } => {
-                        handle_profile_activate(&conn, &name).await
-                    }
+                    ProfileAction::Activate { name } => handle_profile_activate(&conn, &name).await,
                 },
                 Err(e) => {
                     eprintln!("Error: {}", e);

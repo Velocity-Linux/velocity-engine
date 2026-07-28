@@ -1,7 +1,5 @@
 use crate::error::{EngineError, Result};
-use notify::{
-    Config, Event as NotifyEvent, RecommendedWatcher, RecursiveMode, Watcher,
-};
+use notify::{Config, Event as NotifyEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::time::Duration;
