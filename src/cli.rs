@@ -1,6 +1,6 @@
+use crate::error::Result;
 use clap::{Parser, Subcommand};
 use zbus::Connection;
-use crate::error::Result;
 
 #[derive(Parser)]
 #[command(name = "velocityctl")]
@@ -50,7 +50,8 @@ async fn handle_status(conn: &Connection) -> Result<()> {
         "org.velocityos.Engine",
         "/org/velocityos/Engine",
         "org.velocityos.Engine",
-    ).await?;
+    )
+    .await?;
 
     let status: String = proxy.call("GetStatus", &()).await?;
     println!("Status: {}", status);
@@ -63,7 +64,8 @@ async fn handle_profile_list(conn: &Connection) -> Result<()> {
         "org.velocityos.Engine",
         "/org/velocityos/Engine",
         "org.velocityos.Engine",
-    ).await?;
+    )
+    .await?;
 
     let profiles: Vec<String> = proxy.call("ListProfiles", &()).await?;
     println!("Available profiles:");
@@ -79,7 +81,8 @@ async fn handle_profile_activate(conn: &Connection, name: &str) -> Result<()> {
         "org.velocityos.Engine",
         "/org/velocityos/Engine",
         "org.velocityos.Engine",
-    ).await?;
+    )
+    .await?;
 
     proxy.call("ActivateProfile", &(name,)).await?;
     println!("Profile '{}' activated", name);
@@ -92,7 +95,8 @@ async fn handle_games_list(conn: &Connection) -> Result<()> {
         "org.velocityos.Engine",
         "/org/velocityos/Engine",
         "org.velocityos.Engine",
-    ).await?;
+    )
+    .await?;
 
     let games: Vec<String> = proxy.call("ListGames", &()).await?;
     println!("Configured games:");
@@ -108,7 +112,8 @@ async fn handle_reload(conn: &Connection) -> Result<()> {
         "org.velocityos.Engine",
         "/org/velocityos/Engine",
         "org.velocityos.Engine",
-    ).await?;
+    )
+    .await?;
 
     proxy.call("ReloadConfiguration", &()).await?;
     println!("Configuration reloaded");
@@ -121,7 +126,8 @@ async fn handle_optimizations(conn: &Connection) -> Result<()> {
         "org.velocityos.Engine",
         "/org/velocityos/Engine",
         "org.velocityos.Engine",
-    ).await?;
+    )
+    .await?;
 
     let opts: Vec<String> = proxy.call("GetAppliedOptimizations", &()).await?;
     println!("Active optimizers:");
@@ -151,7 +157,9 @@ async fn main() {
             match conn {
                 Ok(conn) => match action {
                     ProfileAction::List => handle_profile_list(&conn).await,
-                    ProfileAction::Activate { name } => handle_profile_activate(&conn, &name).await,
+                    ProfileAction::Activate { name } => {
+                        handle_profile_activate(&conn, &name).await
+                    }
                 },
                 Err(e) => {
                     eprintln!("Error: {}", e);

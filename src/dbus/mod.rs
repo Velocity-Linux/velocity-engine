@@ -29,9 +29,10 @@ impl DbusApi {
 
     async fn activate_profile(&self, profile: &str) -> zbus::fdo::Result<()> {
         let mut engine = self.engine.write().await;
-        engine.activate_profile(profile).await.map_err(|e| {
-            zbus::fdo::Error::Failed(format!("{}", e))
-        })?;
+        engine
+            .activate_profile(profile)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("{}", e)))?;
         Ok(())
     }
 
@@ -47,9 +48,10 @@ impl DbusApi {
 
     async fn reload_configuration(&self) -> zbus::fdo::Result<()> {
         let mut engine = self.engine.write().await;
-        engine.reload_config().await.map_err(|e| {
-            zbus::fdo::Error::Failed(format!("{}", e))
-        })?;
+        engine
+            .reload_config()
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("{}", e)))?;
         Ok(())
     }
 
@@ -73,7 +75,10 @@ impl DbusApi {
     }
 }
 
-pub async fn start_dbus(engine: Arc<RwLock<DaemonEngine>>, bus_name: &str) -> Result<zbus::Connection> {
+pub async fn start_dbus(
+    engine: Arc<RwLock<DaemonEngine>>,
+    bus_name: &str,
+) -> Result<zbus::Connection> {
     info!("Starting D-Bus API on {}", bus_name);
     let connection = zbus::Connection::system()
         .await

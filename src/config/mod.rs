@@ -2,4 +2,4 @@ pub mod loader;
 pub mod types;
 
 pub use loader::ConfigLoader;
-pub use types::{Config, GameRule, ProfileConfig, ProfileSettings};
+pub use types::{Config, GameRule, ProfileConfig};

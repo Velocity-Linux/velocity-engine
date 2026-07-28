@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use crate::config::types::ProfileConfig;
 use crate::error::Result;
-use crate::optimizer::{OptimizationState, Optimizer};
 use crate::optimizer::cpu::CpuOptimizer;
 use crate::optimizer::io::IoOptimizer;
 use crate::optimizer::power::PowerOptimizer;
 use crate::optimizer::scheduler::SchedulerOptimizer;
+use crate::optimizer::{OptimizationState, Optimizer};
 use async_trait::async_trait;
 
 pub struct OptimizerManager {
@@ -29,7 +29,9 @@ impl OptimizerManager {
 
     pub async fn apply_profile(&mut self, profile: &ProfileConfig, pids: &[u32]) -> Result<()> {
         for optimizer in &mut self.optimizers {
-            optimizer.apply(profile, pids, &mut self.current_state).await?;
+            optimizer
+                .apply(profile, pids, &mut self.current_state)
+                .await?;
         }
         Ok(())
     }
@@ -42,6 +44,9 @@ impl OptimizerManager {
     }
 
     pub fn list_optimizers(&self) -> Vec<String> {
-        self.optimizers.iter().map(|o| o.name().to_string()).collect()
+        self.optimizers
+            .iter()
+            .map(|o| o.name().to_string())
+            .collect()
     }
 }
