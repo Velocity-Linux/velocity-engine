@@ -1,6 +1,6 @@
 use tracing::{debug, error, info, trace, warn};
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 use tracing_journald::JournaldWriter;
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 use crate::config::types::LoggingConfig;
 use crate::error::Result;
