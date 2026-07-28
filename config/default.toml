@@ -1,0 +1,56 @@
+[daemon]
+config_path = "/etc/velocity-engine/default.toml"
+poll_interval_ms = 1000
+restore_timeout_ms = 5000
+enable_plugins = true
+dbus_name = "org.velocityos.Engine"
+
+[profiles.default]
+cpu_governor = "schedutil"
+process_priority = 0
+io_priority = "best-effort"
+scheduler = "normal"
+
+[profiles.gaming]
+cpu_governor = "performance"
+cpu_affinity = [0, 1, 2, 3, 4, 5, 6, 7]
+process_priority = -5
+io_priority = "best-effort"
+scheduler = "normal"
+
+[profiles.competitive]
+cpu_governor = "performance"
+cpu_affinity = [0, 1, 2, 3]
+process_priority = -10
+io_priority = "realtime"
+scheduler = "normal"
+
+[profiles.battery]
+cpu_governor = "powersave"
+process_priority = 10
+io_priority = "idle"
+scheduler = "batch"
+
+[[games]]
+name = "Steam Game"
+processes = ["SteamGame.exe", "SteamGame"]
+profile = "gaming"
+
+[[games]]
+name = "Proton Game"
+processes = ["%command%", "wine", "proton"]
+profile = "gaming"
+
+[[games]]
+name = "Native Game"
+processes = ["game_linux"]
+profile = "gaming"
+
+[plugins]
+enabled = []
+disabled = []
+
+[logging]
+level = "info"
+journald = true
+format = "text"

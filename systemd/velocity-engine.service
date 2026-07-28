@@ -1,0 +1,28 @@
+[Unit]
+Description=Velocity Engine Daemon
+Documentation=https://velocity-os.org/docs/engine
+After=network.target sound.target
+Wants=power-profiles-daemon.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/velocity-engine --config /etc/velocity-engine/default.toml
+Restart=on-failure
+RestartSec=5s
+User=root
+Group=root
+
+Security hardening
+NoNewPrivileges=false
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+
+[Install]
+WantedBy=multi-user.target

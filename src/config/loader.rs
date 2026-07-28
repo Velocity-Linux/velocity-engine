@@ -1,0 +1,99 @@
+use super::types::{Config, DaemonConfig, GameRule, LoggingConfig, PluginConfig, ProfileConfig};
+use crate::error::{EngineError, Result};
+use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher, Event as NotifyEvent};
+use std::path::PathBuf;
+use std::sync::mpsc::channel;
+use std::time::Duration;
+use tokio::sync::RwLock;
+use tracing::{error, info, warn};
+
+pub struct ConfigLoader {
+    path: PathBuf,
+    config: RwLock<Config>,
+    watcher: RecommendedWatcher,
+}
+
+impl ConfigLoader {
+    pub async fn new<P: Into<PathBuf>>(path: P) -> Result<Self> {
+        let path = path.into();
+        let config = Self::load_from_file(&path)?;
+        let (tx, rx) = channel();
+        let mut watcher = Watcher::new(
+            move |res: std::result::Result<NotifyEvent, notify::Error>| {
+                if let Err(e) = res {
+                    error!("Config watcher error: {}", e);
+                    return;
+                }
+                let _ = tx.send(());
+            },
+            Config::default(),
+        )
+        .map_err(|e| EngineError::Config(format!("Failed to create watcher: {}", e)))?;
+
+        if let Some(parent) = path.parent() {
+            if let Err(e) = watcher.watch(parent, RecursiveMode::NonRecursive) {
+                warn!("Cannot watch config dir: {}", e);
+            }
+        }
+
+        Ok(Self {
+            path,
+            config: RwLock::new(config),
+            watcher,
+        })
+    }
+
+    pub async fn get(&self) -> std::sync::RwLockReadGuard<'_, Config> {
+        self.config.read().await
+    }
+
+    pub async fn reload(&self) -> Result<()> {
+        info!("Reloading configuration from {:?}", self.path);
+        let new_config = Self::load_from_file(&self.path)?;
+        *self.config.write().await = new_config;
+        info!("Configuration reloaded successfully");
+        Ok(())
+    }
+
+    pub async fn watch_for_changes(&self) {
+        let rx = channel();
+        let _ = rx;
+        loop {
+            if let Ok(_) = std::sync::mpsc::recv_timeout(&rx, Duration::from_millis(100)) {
+                if let Err(e) = self.reload().await {
+                    error!("Failed to reload config: {}", e);
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+    }
+
+    fn load_from_file(path: &PathBuf) -> Result<Config> {
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| EngineError::Config(format!("Cannot read config file: {}", e)))?;
+        let config: Config = toml::from_str(&content)
+            .map_err(|e| EngineError::Config(format!("Cannot parse config: {}", e)))?;
+        Self::validate(&config)?;
+        Ok(config)
+    }
+
+    fn validate(config: &Config) -> Result<()> {
+        if config.profiles.is_empty() {
+            return Err(EngineError::Config("No profiles defined".to_string()));
+        }
+        for game in &config.games {
+            if !config.profiles.contains_key(&game.profile) {
+                return Err(EngineError::Config(format!(
+                    "Game '{}' references unknown profile '{}'",
+                    game.name, game.profile
+                )));
+            }
+        }
+        if config.daemon.poll_interval_ms < 100 {
+            return Err(EngineError::Config(
+                "poll_interval_ms must be >= 100".to_string(),
+            ));
+        }
+        Ok(())
+    }
+}
