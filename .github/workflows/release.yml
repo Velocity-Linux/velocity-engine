@@ -30,10 +30,8 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             artifact: velocity-engine-x86_64-unknown-linux-gnu.tar.gz
-            required: true
           - target: x86_64-unknown-linux-musl
             artifact: velocity-engine-x86_64-unknown-linux-musl.tar.gz
-            required: false
 
     steps:
       - name: Checkout repository
@@ -86,7 +84,8 @@ jobs:
         run: |
           BIN_DIR="target/${{ matrix.target }}/release"
           ls -la "${BIN_DIR}" || true
-          test -d "${BIN_DIR}"
+          test -f "${BIN_DIR}/velocity-engine"
+          test -f "${BIN_DIR}/velocityctl"
 
       - name: Package artifacts
         run: |
