@@ -1,0 +1,110 @@
+name: Arch Package
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version override"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build-package:
+    name: Build Arch Linux Package
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            base-devel \
+            cargo \
+            rust \
+            pkg-config \
+            libdbus-1-dev \
+            devtools
+
+      - name: Determine version from tag or source
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION=$(grep -E '^pkgver=' PKGBUILD | cut -d'=' -f2)
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Update PKGBUILD version
+        shell: bash
+        run: |
+          sed -i "s/^pkgver=.*/pkgver=${{ steps.version.outputs.version }}/" PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
+
+      - name: Generate .SRCINFO
+        shell: bash
+        run: |
+          if command -v makepkg >/dev/null 2>&1; then
+            makepkg --printsrcinfo > .SRCINFO || true
+          else
+            echo "Generating .SRCINFO manually"
+            cat > .SRCINFO << 'EOF'
+pkgbase = velocity-engine
+	pkgdesc = Core optimization daemon for Velocity OS
+	pkgver = ${{ steps.version.outputs.version }}
+	pkgrel = 1
+	url = https://github.com/velocity-os/velocity-engine
+	arch = x86_64
+	license = GPL-3.0-only
+	depends = dbus
+	depends = power-profiles-daemon
+	makedepends = cargo
+	makedepends = rust
+	makedepends = pkg-config
+	makedepends = dbus
+	makedepends = libdbus-1-dev
+	provides = velocity-engine
+	conflicts = velocity-engine
+	backup = etc/velocity-engine/default.toml
+	install = velocity-engine.install
+	source = velocity-engine::git+https://github.com/velocity-os/velocity-engine.git
+	sha256sums = SKIP
+
+pkgname = velocity-engine
+EOF
+          fi
+
+      - name: Build package
+        shell: bash
+        run: |
+          sudo pacman -Sy --noconfirm
+          makepkg -s --noconfirm
+
+      - name: Upload package artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "Arch package ${{ steps.version.outputs.version }}"
+          prerelease: true
+          files: |
+            velocity-engine-*.pkg.tar.zst
+            .SRCINFO
+            PKGBUILD
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

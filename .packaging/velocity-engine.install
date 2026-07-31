@@ -1,0 +1,18 @@
+post_install() {
+  echo "Velocity Engine has been installed."
+  echo "Edit /etc/velocity-engine/default.toml to configure profiles and games."
+  echo ""
+  echo "To enable and start the daemon:"
+  echo "  sudo systemctl enable --now velocity-engine.service"
+}
+
+post_upgrade() {
+  post_install
+}
+
+pre_remove() {
+  echo "Stopping velocity-engine service..."
+  systemctl stop velocity-engine.service 2>/dev/null || true
+  echo "Disabling velocity-engine service..."
+  systemctl disable velocity-engine.service 2>/dev/null || true
+}

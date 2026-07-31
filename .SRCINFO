@@ -1,0 +1,22 @@
+pkgbase = velocity-engine
+	pkgdesc = Core optimization daemon for Velocity OS
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/velocity-os/velocity-engine
+	arch = x86_64
+	license = GPL-3.0-only
+	depends = dbus
+	depends = power-profiles-daemon
+	makedepends = cargo
+	makedepends = rust
+	makedepends = pkg-config
+	makedepends = dbus
+	makedepends = libdbus-1-dev
+	provides = velocity-engine
+	conflicts = velocity-engine
+	backup = etc/velocity-engine/default.toml
+	install = velocity-engine.install
+	source = velocity-engine::git+https://github.com/velocity-os/velocity-engine.git
+	sha256sums = SKIP
+
+pkgname = velocity-engine
