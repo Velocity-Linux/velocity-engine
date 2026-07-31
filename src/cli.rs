@@ -1,5 +1,5 @@
-use velocity_engine::error::Result;
 use clap::{Parser, Subcommand};
+use velocity_engine::error::Result;
 use zbus::Connection;
 
 #[derive(Parser)]
@@ -37,9 +37,9 @@ enum GamesAction {
 }
 
 async fn get_dbus_connection() -> Result<Connection> {
-    Connection::system()
-        .await
-        .map_err(|e| velocity_engine::error::EngineError::DBus(format!("Cannot connect to D-Bus: {}", e)))
+    Connection::system().await.map_err(|e| {
+        velocity_engine::error::EngineError::DBus(format!("Cannot connect to D-Bus: {}", e))
+    })
 }
 
 async fn handle_status(conn: &Connection) -> Result<()> {

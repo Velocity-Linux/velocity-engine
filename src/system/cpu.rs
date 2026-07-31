@@ -115,7 +115,7 @@ impl SystemUtils {
     pub fn set_cpu_affinity(pid: u32, cpus: &[usize]) -> Result<(), String> {
         #[cfg(target_os = "linux")]
         {
-            use libc::{CPU_SET, CPU_ZERO, cpu_set_t};
+            use libc::{cpu_set_t, CPU_SET, CPU_ZERO};
             let mut mask: cpu_set_t = unsafe { std::mem::zeroed() };
             unsafe {
                 CPU_ZERO(&mut mask);
@@ -152,7 +152,10 @@ impl SystemUtils {
         unsafe {
             let res = libc::setpriority(libc::PRIO_PROCESS, pid, priority);
             if res != 0 {
-                return Err(format!("setpriority failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "setpriority failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         eprintln!("Set priority for PID {} to {}", pid, priority);
@@ -170,7 +173,10 @@ impl SystemUtils {
         unsafe {
             let res = libc::syscall(libc::SYS_ioprio_set, 1, pid as i32, ioprio_data);
             if res != 0 {
-                return Err(format!("ioprio_set failed: {}", std::io::Error::last_os_error()));
+                return Err(format!(
+                    "ioprio_set failed: {}",
+                    std::io::Error::last_os_error()
+                ));
             }
         }
         eprintln!("Set I/O priority for PID {} to {}", pid, class);

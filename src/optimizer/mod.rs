@@ -44,11 +44,7 @@ impl OptimizerManager {
         Self::default()
     }
 
-    pub async fn apply_profile(
-        &self,
-        profile: &ProfileConfig,
-        pids: &[u32],
-    ) -> Result<()> {
+    pub async fn apply_profile(&self, profile: &ProfileConfig, pids: &[u32]) -> Result<()> {
         let mut state = OptimizationState::default();
         self.cpu.apply(profile, pids, &mut state).await?;
         self.io.apply(profile, pids, &mut state).await?;

@@ -18,15 +18,17 @@ fn init_stderr(filter: EnvFilter, format: &str) -> Result<()> {
             .with_writer(std::io::stderr)
             .json()
             .finish();
-        tracing::subscriber::set_global_default(subscriber)
-            .map_err(|e| crate::error::EngineError::System(format!("Cannot init logging: {}", e)))?;
+        tracing::subscriber::set_global_default(subscriber).map_err(|e| {
+            crate::error::EngineError::System(format!("Cannot init logging: {}", e))
+        })?;
     } else {
         let subscriber = tracing_subscriber::fmt()
             .with_env_filter(filter)
             .with_writer(std::io::stderr)
             .finish();
-        tracing::subscriber::set_global_default(subscriber)
-            .map_err(|e| crate::error::EngineError::System(format!("Cannot init logging: {}", e)))?;
+        tracing::subscriber::set_global_default(subscriber).map_err(|e| {
+            crate::error::EngineError::System(format!("Cannot init logging: {}", e))
+        })?;
     }
     Ok(())
 }

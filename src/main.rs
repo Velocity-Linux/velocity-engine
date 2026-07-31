@@ -17,7 +17,8 @@ struct Args {
     verbose: bool,
 }
 
-static SHUTDOWN: std::sync::LazyLock<std::sync::Arc<std::sync::atomic::AtomicBool>> = std::sync::LazyLock::new(|| std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)));
+static SHUTDOWN: std::sync::LazyLock<std::sync::Arc<std::sync::atomic::AtomicBool>> =
+    std::sync::LazyLock::new(|| std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)));
 
 #[tokio::main]
 async fn main() {
