@@ -39,7 +39,7 @@ impl ConfigLoader {
         Ok(Self {
             path,
             config: RwLock::new(config),
-            _            _watcher: Some(watcher),
+            _watcher: Some(watcher),
         })
     }
 
