@@ -40,6 +40,7 @@ pub struct ProfileConfig {
     pub io_priority: Option<String>,
     pub power_profile: Option<String>,
     pub scheduler: Option<String>,
+    #[serde(default)]
     pub tweaks: HashMap<String, String>,
 }
 
