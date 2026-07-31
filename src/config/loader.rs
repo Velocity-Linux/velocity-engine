@@ -58,7 +58,7 @@ impl ConfigLoader {
     pub async fn watch_for_changes(&self) {
         let (_tx, _rx) = channel::<()>();
         loop {
-            if let Ok(_) = _rx.recv_timeout(Duration::from_millis(100)) {
+            if _rx.recv_timeout(Duration::from_millis(100)).is_ok() {
                 if let Err(e) = self.reload().await {
                     error!("Failed to reload config: {}", e);
                 }

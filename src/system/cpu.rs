@@ -92,7 +92,7 @@ impl SystemUtils {
 
     pub fn get_available_governors() -> Vec<String> {
         let path = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors";
-        Self::read_file(&path)
+        Self::read_file(path)
             .map(|s| s.split_whitespace().map(|s| s.to_string()).collect())
             .unwrap_or_default()
     }
@@ -166,7 +166,7 @@ impl SystemUtils {
         let ioprio_data = match class {
             "realtime" => (2 << 13) | priority.clamp(0, 7),
             "best-effort" => (1 << 13) | priority.clamp(0, 7),
-            "idle" => (3 << 13) | 0,
+            "idle" => (3 << 13),
             _ => return Err(format!("Unknown I/O priority class: {}", class)),
         };
 

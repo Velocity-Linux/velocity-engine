@@ -32,7 +32,7 @@ impl Default for DaemonConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProfileConfig {
     pub cpu_governor: Option<String>,
     pub cpu_affinity: Option<Vec<usize>>,
@@ -42,20 +42,6 @@ pub struct ProfileConfig {
     pub scheduler: Option<String>,
     #[serde(default)]
     pub tweaks: HashMap<String, String>,
-}
-
-impl Default for ProfileConfig {
-    fn default() -> Self {
-        Self {
-            cpu_governor: None,
-            cpu_affinity: None,
-            process_priority: None,
-            io_priority: None,
-            power_profile: None,
-            scheduler: None,
-            tweaks: HashMap::new(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,19 +56,10 @@ pub struct GameRule {
     pub plugins: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PluginConfig {
     pub enabled: Vec<String>,
     pub disabled: Vec<String>,
-}
-
-impl Default for PluginConfig {
-    fn default() -> Self {
-        Self {
-            enabled: vec![],
-            disabled: vec![],
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
