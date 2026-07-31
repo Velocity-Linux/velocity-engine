@@ -166,7 +166,7 @@ impl SystemUtils {
         let ioprio_data = match class {
             "realtime" => (2 << 13) | priority.clamp(0, 7),
             "best-effort" => (1 << 13) | priority.clamp(0, 7),
-            "idle" => (3 << 13),
+            "idle" => 3 << 13,
             _ => return Err(format!("Unknown I/O priority class: {}", class)),
         };
 
