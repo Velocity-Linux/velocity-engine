@@ -81,19 +81,35 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Verify build output
+        shell: bash
         run: |
+          set -euo pipefail
           BIN_DIR="target/${{ matrix.target }}/release"
-          ls -la "${BIN_DIR}" || true
+          ls -la "${BIN_DIR}"
           test -f "${BIN_DIR}/velocity-engine"
           test -f "${BIN_DIR}/velocityctl"
 
       - name: Package artifacts
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p release
+
           BIN_DIR="target/${{ matrix.target }}/release"
+          ENGINE_BIN="${BIN_DIR}/velocity-engine"
+          CTL_BIN="${BIN_DIR}/velocityctl"
+
+          echo "Packaging from: ${BIN_DIR}"
+          ls -la "${BIN_DIR}"
+
+          test -d "${BIN_DIR}"
+          test -f "${ENGINE_BIN}"
+          test -f "${CTL_BIN}"
+
           tar -czf "release/${{ matrix.artifact }}" \
-            -C "$BIN_DIR" velocity-engine \
-            -C "$BIN_DIR" velocityctl
+            -C "${BIN_DIR}" \
+            velocity-engine \
+            velocityctl
 
       - name: Compute checksums
         run: |
