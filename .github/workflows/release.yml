@@ -46,13 +46,13 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install musl target for musl builds
+      - name: Install musl toolchain
         if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
 
-      - name: Extract version from tag, dispatch input, or generate snapshot
+      - name: Determine version
         id: version
         run: |
           SHORT_SHA="${GITHUB_SHA::8}"
@@ -62,17 +62,16 @@ jobs:
           elif [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION="${GITHUB_REF#refs/tags/}"
           else
-            # Branch push snapshot: use current Cargo version plus short sha
-            BASE_VERSION=$(grep -E '^version = "[^"]+"' Cargo.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '\n')
-            VERSION="${BASE_VERSION}-snapshot.${SHORT_SHA}"
+            VERSION="snapshot-${SHORT_SHA}"
           fi
 
-          # Strip leading v if present for Cargo.toml
-          CARGO_VERSION="${VERSION#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "cargo_version=${CARGO_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "CARGO_VERSION=${CARGO_VERSION}" >> "$GITHUB_ENV"
-          echo "is_snapshot=${{ github.event_name == 'push' && github.ref_type != 'tag' }}" >> "$GITHUB_ENV"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "prerelease=${{ github.event.inputs.prerelease }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build release binaries
         run: |
@@ -82,7 +81,7 @@ jobs:
         run: |
           mkdir -p release
           BIN_DIR="target/${{ matrix.target }}/release"
-          tar -czf "release/${{ artifact }}" \
+          tar -czf "release/${{ matrix.artifact }}" \
             -C "$BIN_DIR" velocity-engine \
             -C "$BIN_DIR" velocityctl
 
@@ -96,51 +95,8 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
-          prerelease: ${{ env.is_snapshot == 'true' || inputs.prerelease == 'true' || github.event.inputs.prerelease == 'true' }}
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           files: |
             release/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  changelog:
-    name: Generate changelog
-    runs-on: ubuntu-22.04
-    needs: release
-    if: ${{ github.event_name != 'push' || github.ref_type == 'tag' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF#refs/tags/}"
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
-          PREV_TAG=$(git describe --abbrev=0 --tags "$(git rev-list --tags --skip=1 --max-count=1)" 2>/dev/null || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
-          else
-            CHANGELOG=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
-          fi
-
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Update release with changelog
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.changelog.outputs.version }}
-          body: |
-            ${{ steps.changelog.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
