@@ -150,7 +150,7 @@ impl SystemUtils {
 
     pub fn set_process_priority(pid: u32, priority: i32) -> Result<(), String> {
         unsafe {
-            let res = libc::setpriority(libc::PRIO_PROCESS, pid as i32, priority);
+            let res = libc::setpriority(libc::PRIO_PROCESS, pid, priority);
             if res != 0 {
                 return Err(format!("setpriority failed: {}", std::io::Error::last_os_error()));
             }

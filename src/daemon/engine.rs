@@ -36,7 +36,7 @@ impl DaemonEngine {
         })
     }
 
-    pub async fn detect_and_optimize(&self) -> Result<()> {
+    pub async fn detect_and_optimize(&mut self) -> Result<()> {
         let detected = self.detector.check_games().await?;
 
         if detected.is_empty() {
@@ -64,7 +64,7 @@ impl DaemonEngine {
                 let pids = self.get_game_pids(&game).await;
                 self.optimizer.apply_profile(profile, &pids).await?;
 
-                let mut state = OptimizationState::default();
+                let state = OptimizationState::default();
                 self.optimizer.apply_profile(profile, &pids).await?;
                 self.states.write().await.push((game.name.clone(), state));
 
@@ -79,7 +79,7 @@ impl DaemonEngine {
         Ok(())
     }
 
-    pub async fn game_started(&self, game_name: &str, profile: &str) -> Result<()> {
+    pub async fn game_started(&mut self, game_name: &str, profile: &str) -> Result<()> {
         info!(
             "Game started via plugin: {} with profile '{}'",
             game_name, profile
@@ -100,7 +100,7 @@ impl DaemonEngine {
         Ok(())
     }
 
-    pub async fn restore_all(&self) -> Result<()> {
+    pub async fn restore_all(&mut self) -> Result<()> {
         warn!("Restoring all optimizations");
         self.optimizer.restore().await?;
         *self.active_games.write().await = Vec::new();
@@ -115,7 +115,7 @@ impl DaemonEngine {
         Ok(())
     }
 
-    pub async fn activate_profile(&self, profile: &str) -> Result<()> {
+    pub async fn activate_profile(&mut self, profile: &str) -> Result<()> {
         info!("Manually activating profile: {}", profile);
         let profile_config = self.profile_manager.get_profile(profile).ok_or_else(|| {
             crate::error::EngineError::Profile(format!("Profile not found: {}", profile))
@@ -159,7 +159,7 @@ impl DaemonEngine {
         self.config.daemon.poll_interval_ms
     }
 
-    async fn restore_if_needed(&self) -> Result<()> {
+    async fn restore_if_needed(&mut self) -> Result<()> {
         let active_games = self.active_games.read().await;
         if active_games.is_empty() {
             let states = self.states.read().await;
@@ -197,7 +197,7 @@ impl DaemonEngine {
         pids
     }
 
-    async fn restore_game_state(&self, game_name: &str) -> Result<()> {
+    async fn restore_game_state(&mut self, game_name: &str) -> Result<()> {
         let mut active_games = self.active_games.write().await;
         active_games.retain(|g| g != game_name);
 

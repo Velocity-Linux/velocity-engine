@@ -27,7 +27,7 @@ impl DbusApi {
     }
 
     async fn activate_profile(&self, profile: &str) -> zbus::fdo::Result<()> {
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         engine
             .activate_profile(profile)
             .await
@@ -60,14 +60,14 @@ impl DbusApi {
     }
 
     async fn game_started(&self, game_name: &str, profile: &str) {
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         if let Err(e) = engine.game_started(game_name, profile).await {
             warn!("Failed to apply optimizations for {}: {}", game_name, e);
         }
     }
 
     async fn game_stopped(&self, game_name: &str) {
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         if let Err(e) = engine.game_stopped(game_name).await {
             warn!("Failed to restore optimizations after {}: {}", game_name, e);
         }

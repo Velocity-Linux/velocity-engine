@@ -17,8 +17,8 @@ impl ConfigLoader {
     pub async fn new<P: Into<PathBuf>>(path: P) -> Result<Self> {
         let path = path.into();
         let config = Self::load_from_file(&path)?;
-        let (tx, rx) = channel::<()>();
-        let watcher = RecommendedWatcher::new(
+        let (tx, _rx) = channel::<()>();
+        let mut watcher = RecommendedWatcher::new(
             move |res: std::result::Result<NotifyEvent, notify::Error>| {
                 if let Err(e) = res {
                     error!("Config watcher error: {}", e);
@@ -56,10 +56,9 @@ impl ConfigLoader {
     }
 
     pub async fn watch_for_changes(&self) {
-        let (tx, rx) = channel::<()>();
-        let _tx: std::sync::mpsc::Sender<()> = tx;
+        let (_tx, _rx) = channel::<()>();
         loop {
-            if let Ok(_) = rx.recv_timeout(Duration::from_millis(100)) {
+            if let Ok(_) = _rx.recv_timeout(Duration::from_millis(100)) {
                 if let Err(e) = self.reload().await {
                     error!("Failed to reload config: {}", e);
                 }

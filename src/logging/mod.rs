@@ -1,5 +1,5 @@
-use tracing::{info, warn};
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing::info;
+use tracing_subscriber::EnvFilter;
 
 use crate::config::types::LoggingConfig;
 use crate::error::Result;
