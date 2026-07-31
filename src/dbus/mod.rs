@@ -46,7 +46,7 @@ impl DbusApi {
     }
 
     async fn reload_configuration(&self) -> zbus::fdo::Result<()> {
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         engine
             .reload_config()
             .await

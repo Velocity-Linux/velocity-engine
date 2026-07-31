@@ -55,7 +55,7 @@ impl DaemonService {
         }
     }
 
-    async fn tick(&mut self) -> Result<()> {
+    async fn tick(&self) -> Result<()> {
         let engine = self.engine.read().await;
         engine.detect_and_optimize().await?;
         Ok(())
@@ -63,7 +63,7 @@ impl DaemonService {
 
     pub async fn shutdown(&self) -> Result<()> {
         info!("Shutting down Velocity Engine");
-        let engine = self.engine.write().await;
+        let engine = self.engine.read().await;
         engine.restore_all().await?;
         Ok(())
     }

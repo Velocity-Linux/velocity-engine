@@ -10,7 +10,7 @@ pub struct IoOptimizer;
 #[async_trait::async_trait]
 impl Optimizer for IoOptimizer {
     async fn apply(
-        &mut self,
+        &self,
         profile: &ProfileConfig,
         pids: &[u32],
         state: &mut OptimizationState,

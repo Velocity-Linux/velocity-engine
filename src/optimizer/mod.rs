@@ -22,7 +22,7 @@ pub struct OptimizationState {
 #[async_trait]
 pub trait Optimizer: Send + Sync {
     async fn apply(
-        &mut self,
+        &self,
         profile: &ProfileConfig,
         pids: &[u32],
         state: &mut OptimizationState,
@@ -45,7 +45,7 @@ impl OptimizerManager {
     }
 
     pub async fn apply_profile(
-        &mut self,
+        &self,
         profile: &ProfileConfig,
         pids: &[u32],
     ) -> Result<()> {

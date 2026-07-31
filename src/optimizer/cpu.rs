@@ -9,7 +9,7 @@ pub struct CpuOptimizer;
 
 impl CpuOptimizer {
     async fn apply_impl(
-        &mut self,
+        &self,
         profile: &ProfileConfig,
         pids: &[u32],
         state: &mut OptimizationState,
@@ -62,7 +62,7 @@ impl CpuOptimizer {
 #[async_trait::async_trait]
 impl Optimizer for CpuOptimizer {
     async fn apply(
-        &mut self,
+        &self,
         profile: &ProfileConfig,
         pids: &[u32],
         state: &mut OptimizationState,

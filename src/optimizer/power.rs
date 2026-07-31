@@ -9,7 +9,7 @@ pub struct PowerOptimizer;
 #[async_trait::async_trait]
 impl Optimizer for PowerOptimizer {
     async fn apply(
-        &mut self,
+        &self,
         profile: &ProfileConfig,
         _pids: &[u32],
         state: &mut OptimizationState,
