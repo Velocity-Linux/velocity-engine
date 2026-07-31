@@ -1,5 +1,6 @@
+use crate::config::types::Config;
 use crate::error::{EngineError, Result};
-use notify::{Config, Event as NotifyEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Event as NotifyEvent, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::time::Duration;
@@ -9,15 +10,15 @@ use tracing::{error, info, warn};
 pub struct ConfigLoader {
     path: PathBuf,
     config: RwLock<Config>,
-    watcher: RecommendedWatcher,
+    watcher: Option<RecommendedWatcher>,
 }
 
 impl ConfigLoader {
     pub async fn new<P: Into<PathBuf>>(path: P) -> Result<Self> {
         let path = path.into();
         let config = Self::load_from_file(&path)?;
-        let (tx, rx) = channel();
-        let mut watcher = Watcher::new(
+        let (tx, rx) = channel::<()>();
+        let watcher = RecommendedWatcher::new(
             move |res: std::result::Result<NotifyEvent, notify::Error>| {
                 if let Err(e) = res {
                     error!("Config watcher error: {}", e);
@@ -25,7 +26,7 @@ impl ConfigLoader {
                 }
                 let _ = tx.send(());
             },
-            Config::default(),
+            notify::Config::default(),
         )
         .map_err(|e| EngineError::Config(format!("Failed to create watcher: {}", e)))?;
 
@@ -38,11 +39,11 @@ impl ConfigLoader {
         Ok(Self {
             path,
             config: RwLock::new(config),
-            watcher,
+            watcher: Some(watcher),
         })
     }
 
-    pub async fn get(&self) -> std::sync::RwLockReadGuard<'_, Config> {
+    pub async fn get(&self) -> tokio::sync::RwLockReadGuard<'_, Config> {
         self.config.read().await
     }
 
@@ -55,8 +56,8 @@ impl ConfigLoader {
     }
 
     pub async fn watch_for_changes(&self) {
-        let (tx, rx) = channel();
-        let _ = tx;
+        let (tx, rx) = channel::<()>();
+        let _tx: std::sync::mpsc::Sender<()> = tx;
         loop {
             if let Ok(_) = rx.recv_timeout(Duration::from_millis(100)) {
                 if let Err(e) = self.reload().await {

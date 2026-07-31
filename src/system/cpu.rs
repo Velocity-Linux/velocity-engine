@@ -20,7 +20,6 @@ impl SystemUtils {
     }
 
     pub fn run_command(cmd: &str, args: &[&str]) -> Result<String, String> {
-        debug!("Running command: {} {:?}", cmd, args);
         let output = std::process::Command::new(cmd)
             .args(args)
             .output()
@@ -82,7 +81,7 @@ impl SystemUtils {
         if let Ok(paths) = glob::glob(pattern) {
             for path in paths.flatten() {
                 if let Err(e) = Self::write_file(path.to_str().unwrap(), governor) {
-                    warn!("Cannot set governor on {}: {}", path.display(), e);
+                    eprintln!("Cannot set governor on {}: {}", path.display(), e);
                 }
             }
             Ok(())
@@ -114,62 +113,67 @@ impl SystemUtils {
     }
 
     pub fn set_cpu_affinity(pid: u32, cpus: &[usize]) -> Result<(), String> {
-        let mut mask: u64 = 0;
-        for cpu in cpus {
-            if *cpu < 64 {
-                mask |= 1u64 << cpu;
+        #[cfg(target_os = "linux")]
+        {
+            use libc::{CPU_SET, CPU_ZERO, cpu_set_t};
+            let mut mask: cpu_set_t = unsafe { std::mem::zeroed() };
+            unsafe {
+                CPU_ZERO(&mut mask);
+                for cpu in cpus {
+                    if *cpu < 64 {
+                        CPU_SET(*cpu, &mut mask);
+                    }
+                }
+            }
+            unsafe {
+                let res = libc::sched_setaffinity(
+                    pid.try_into().unwrap(),
+                    std::mem::size_of_val(&mask),
+                    &mask,
+                );
+                if res != 0 {
+                    return Err(format!(
+                        "sched_setaffinity failed: {}",
+                        std::io::Error::last_os_error()
+                    ));
+                }
             }
         }
-
-        unsafe {
-            let res = libc::sched_setaffinity(
-                pid,
-                std::mem::size_of::<u64>(),
-                &mask as *const u64 as *const libc::c_void,
-            );
-            if res != 0 {
-                return Err(format!(
-                    "sched_setaffinity failed: {}",
-                    std::io::Error::last_os_error()
-                ));
-            }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = pid;
+            let _ = cpus;
         }
-        debug!("Set CPU affinity for PID {} to {:?}", pid, cpus);
+        eprintln!("Set CPU affinity for PID {} to {:?}", pid, cpus);
         Ok(())
     }
 
     pub fn set_process_priority(pid: u32, priority: i32) -> Result<(), String> {
         unsafe {
-            let res = libc::setpriority(libc::PRIO_PROCESS, pid, priority);
+            let res = libc::setpriority(libc::PRIO_PROCESS, pid as i32, priority);
             if res != 0 {
-                return Err(format!(
-                    "setpriority failed: {}",
-                    std::io::Error::last_os_error()
-                ));
+                return Err(format!("setpriority failed: {}", std::io::Error::last_os_error()));
             }
         }
-        debug!("Set priority for PID {} to {}", pid, priority);
+        eprintln!("Set priority for PID {} to {}", pid, priority);
         Ok(())
     }
 
     pub fn set_io_priority(pid: u32, class: &str, priority: i32) -> Result<(), String> {
         let ioprio_data = match class {
-            "realtime" => ((2 << 13) | (priority.clamp(0, 7))),
-            "best-effort" => ((1 << 13) | (priority.clamp(0, 7))),
-            "idle" => ((3 << 13) | 0),
+            "realtime" => (2 << 13) | priority.clamp(0, 7),
+            "best-effort" => (1 << 13) | priority.clamp(0, 7),
+            "idle" => (3 << 13) | 0,
             _ => return Err(format!("Unknown I/O priority class: {}", class)),
         };
 
         unsafe {
-            let res = libc::syscall(libc::SYS_ioprio_set, 1, pid, ioprio_data);
+            let res = libc::syscall(libc::SYS_ioprio_set, 1, pid as i32, ioprio_data);
             if res != 0 {
-                return Err(format!(
-                    "ioprio_set failed: {}",
-                    std::io::Error::last_os_error()
-                ));
+                return Err(format!("ioprio_set failed: {}", std::io::Error::last_os_error()));
             }
         }
-        debug!("Set I/O priority for PID {} to {}", pid, class);
+        eprintln!("Set I/O priority for PID {} to {}", pid, class);
         Ok(())
     }
 

@@ -3,7 +3,6 @@ use tokio::sync::RwLock;
 use tracing::{info, warn};
 use zbus::interface;
 
-use crate::config::types::ProfileConfig;
 use crate::daemon::DaemonEngine;
 use crate::error::{EngineError, Result};
 

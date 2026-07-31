@@ -1,6 +1,7 @@
 use crate::config::types::ProfileConfig;
 use crate::error::EngineError;
 use crate::optimizer::{OptimizationState, Optimizer};
+use tracing::info;
 
 #[derive(Debug, Clone, Default)]
 pub struct PowerOptimizer;

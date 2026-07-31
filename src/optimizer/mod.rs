@@ -30,3 +30,48 @@ pub trait Optimizer: Send + Sync {
     async fn restore(&self, state: &OptimizationState) -> Result<()>;
     fn name(&self) -> &'static str;
 }
+
+#[derive(Debug, Clone, Default)]
+pub struct OptimizerManager {
+    cpu: cpu::CpuOptimizer,
+    io: io::IoOptimizer,
+    power: power::PowerOptimizer,
+    scheduler: scheduler::SchedulerOptimizer,
+}
+
+impl OptimizerManager {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub async fn apply_profile(
+        &mut self,
+        profile: &ProfileConfig,
+        pids: &[u32],
+    ) -> Result<()> {
+        let mut state = OptimizationState::default();
+        self.cpu.apply(profile, pids, &mut state).await?;
+        self.io.apply(profile, pids, &mut state).await?;
+        self.power.apply(profile, pids, &mut state).await?;
+        self.scheduler.apply(profile, pids, &mut state).await?;
+        Ok(())
+    }
+
+    pub async fn restore(&self) -> Result<()> {
+        let state = OptimizationState::default();
+        self.cpu.restore(&state).await?;
+        self.io.restore(&state).await?;
+        self.power.restore(&state).await?;
+        self.scheduler.restore(&state).await?;
+        Ok(())
+    }
+
+    pub fn list_optimizers(&self) -> Vec<String> {
+        vec![
+            self.cpu.name().to_string(),
+            self.io.name().to_string(),
+            self.power.name().to_string(),
+            self.scheduler.name().to_string(),
+        ]
+    }
+}

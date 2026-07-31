@@ -2,6 +2,7 @@ use crate::config::types::ProfileConfig;
 use crate::error::EngineError;
 use crate::optimizer::{OptimizationState, Optimizer};
 use crate::system::SystemUtils;
+use tracing::{debug, warn};
 
 #[derive(Debug, Clone, Default)]
 pub struct IoOptimizer;

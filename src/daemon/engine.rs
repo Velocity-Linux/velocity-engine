@@ -4,9 +4,8 @@ use tracing::{info, warn};
 use crate::config::types::{Config, GameRule};
 use crate::detector::GameDetector;
 use crate::error::Result;
-use crate::optimizer::OptimizerManager;
+use crate::optimizer::{OptimizationState, OptimizerManager};
 use crate::profiles::ProfileManager;
-use crate::system::SystemUtils;
 
 pub struct DaemonEngine {
     config: Config,

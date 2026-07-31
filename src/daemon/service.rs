@@ -3,7 +3,6 @@ use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
 use tracing::{error, info};
 
-use crate::config::types::Config;
 use crate::daemon::engine::DaemonEngine;
 use crate::dbus::start_dbus;
 use crate::error::Result;
