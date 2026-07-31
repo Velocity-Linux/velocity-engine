@@ -11,7 +11,12 @@ mod tests {
             config_path = "/tmp/test.toml"
             poll_interval_ms = 1000
             restore_timeout_ms = 5000
+            enable_plugins = true
             dbus_name = "org.velocityos.Engine"
+
+            [plugins]
+            enabled = []
+            disabled = []
 
             [profiles.gaming]
             cpu_governor = "performance"
@@ -51,7 +56,12 @@ mod tests {
             config_path = "/tmp/test.toml"
             poll_interval_ms = 1000
             restore_timeout_ms = 5000
+            enable_plugins = true
             dbus_name = "org.velocityos.Engine"
+
+            [plugins]
+            enabled = []
+            disabled = []
 
             [profiles.gaming]
             cpu_governor = "performance"
