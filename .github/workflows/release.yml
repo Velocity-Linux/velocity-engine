@@ -21,17 +21,9 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build and Release
+  release-gnu:
+    name: Build and Release (glibc)
     runs-on: ubuntu-22.04
-
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            artifact: velocity-engine-x86_64-unknown-linux-gnu.tar.gz
-          - target: x86_64-unknown-linux-musl
-            artifact: velocity-engine-x86_64-unknown-linux-musl.tar.gz
 
     steps:
       - name: Checkout repository
@@ -42,7 +34,102 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config
+
+      - name: Ensure target is installed
+        run: rustup target add x86_64-unknown-linux-gnu
+
+      - name: Determine version
+        id: version
+        run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="snapshot-${SHORT_SHA}"
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "prerelease=${{ github.event.inputs.prerelease }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release binaries
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Verify build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="target/x86_64-unknown-linux-gnu/release"
+          ls -la "${BIN_DIR}"
+          test -f "${BIN_DIR}/velocity-engine"
+          test -f "${BIN_DIR}/velocityctl"
+
+      - name: Package artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          BIN_DIR="target/x86_64-unknown-linux-gnu/release"
+          ENGINE_BIN="${BIN_DIR}/velocity-engine"
+          CTL_BIN="${BIN_DIR}/velocityctl"
+
+          echo "Packaging from: ${BIN_DIR}"
+          ls -la "${BIN_DIR}"
+
+          test -d "${BIN_DIR}"
+          test -f "${ENGINE_BIN}"
+          test -f "${CTL_BIN}"
+
+          tar -czf "release/velocity-engine-x86_64-unknown-linux-gnu.tar.gz" \
+            -C "${BIN_DIR}" \
+            velocity-engine \
+            velocityctl
+
+      - name: Compute checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum velocity-engine-x86_64-unknown-linux-gnu.tar.gz > velocity-engine-x86_64-unknown-linux-gnu.tar.gz.sha256
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          files: |
+            release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-musl:
+    name: Build and Release (musl)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
 
       - name: Install system dependencies
         run: |
@@ -50,10 +137,9 @@ jobs:
           sudo apt-get install -y pkg-config musl-tools
 
       - name: Ensure target is installed
-        run: rustup target add ${{ matrix.target }}
+        run: rustup target add x86_64-unknown-linux-musl
 
       - name: Configure musl linker
-        if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
         run: echo 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc' >> "$GITHUB_ENV"
 
       - name: Determine version
@@ -78,13 +164,23 @@ jobs:
           fi
 
       - name: Build release binaries
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Show build diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="target/x86_64-unknown-linux-musl/release"
+          echo "Listing build output for musl target"
+          ls -la "${BIN_DIR}" || true
+          echo "Listing full target tree"
+          find target/x86_64-unknown-linux-musl -maxdepth 3 -type f -o -type d | sort || true
 
       - name: Verify build output
         shell: bash
         run: |
           set -euo pipefail
-          BIN_DIR="target/${{ matrix.target }}/release"
+          BIN_DIR="target/x86_64-unknown-linux-musl/release"
           ls -la "${BIN_DIR}"
           test -f "${BIN_DIR}/velocity-engine"
           test -f "${BIN_DIR}/velocityctl"
@@ -94,8 +190,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
-
-          BIN_DIR="target/${{ matrix.target }}/release"
+          BIN_DIR="target/x86_64-unknown-linux-musl/release"
           ENGINE_BIN="${BIN_DIR}/velocity-engine"
           CTL_BIN="${BIN_DIR}/velocityctl"
 
@@ -106,15 +201,17 @@ jobs:
           test -f "${ENGINE_BIN}"
           test -f "${CTL_BIN}"
 
-          tar -czf "release/${{ matrix.artifact }}" \
+          tar -czf "release/velocity-engine-x86_64-unknown-linux-musl.tar.gz" \
             -C "${BIN_DIR}" \
             velocity-engine \
             velocityctl
 
       - name: Compute checksums
+        shell: bash
         run: |
+          set -euo pipefail
           cd release
-          sha256sum "${{ matrix.artifact }}" > "${{ matrix.artifact }}.sha256"
+          sha256sum velocity-engine-x86_64-unknown-linux-musl.tar.gz > velocity-engine-x86_64-unknown-linux-musl.tar.gz.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
