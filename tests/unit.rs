@@ -10,6 +10,7 @@ mod tests {
     fn test_config_validation() {
         let toml_content = r#"
             [daemon]
+            config_path = "/tmp/test.toml"
             poll_interval_ms = 1000
             restore_timeout_ms = 5000
             enable_plugins = true
