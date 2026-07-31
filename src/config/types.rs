@@ -66,6 +66,7 @@ pub struct GameRule {
     pub custom_affinity: Option<Vec<usize>>,
     pub custom_priority: Option<i32>,
     pub custom_io_priority: Option<String>,
+    #[serde(default)]
     pub plugins: Vec<String>,
 }
 
