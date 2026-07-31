@@ -39,7 +39,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config
+          sudo apt-get install -y pkg-config build-essential libdbus-1-dev
 
       - name: Ensure target is installed
         run: rustup target add x86_64-unknown-linux-gnu
@@ -134,7 +134,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config musl-tools
+          sudo apt-get install -y pkg-config build-essential libdbus-1-dev musl-tools
 
       - name: Ensure target is installed
         run: rustup target add x86_64-unknown-linux-musl
