@@ -50,6 +50,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y musl-tools
 
+      - name: Ensure target is installed
+        run: rustup target add ${{ matrix.target }}
+
       - name: Determine version
         id: version
         run: |
@@ -72,8 +75,13 @@ jobs:
           fi
 
       - name: Build release binaries
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Verify build output
         run: |
-          cargo build --release --target ${{ matrix.target }}
+          BIN_DIR="target/${{ matrix.target }}/release"
+          ls -la "${BIN_DIR}" || true
+          test -d "${BIN_DIR}"
 
       - name: Package artifacts
         run: |
