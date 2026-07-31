@@ -1,0 +1,134 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. v0.2.0)"
+        required: true
+        default: "v0.2.0"
+      prerelease:
+        description: "Mark as prerelease?"
+        required: true
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+            artifact: velocity-engine-x86_64-unknown-linux-gnu.tar.gz
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-22.04
+            artifact: velocity-engine-x86_64-unknown-linux-musl.tar.gz
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl target for musl builds
+        if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Extract version from tag or dispatch input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          CARGO_VERSION="${VERSION#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "cargo_version=${CARGO_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "CARGO_VERSION=${CARGO_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Build release binaries
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Package artifacts
+        run: |
+          mkdir -p release
+          BIN_DIR="target/${{ matrix.target }}/release"
+          tar -czf "release/${{ matrix.artifact }}" \
+            -C "$BIN_DIR" velocity-engine \
+            -C "$BIN_DIR" velocityctl
+
+      - name: Compute checksums
+        run: |
+          cd release
+          sha256sum "${{ matrix.artifact }}" > "${{ matrix.artifact }}.sha256"
+
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          prerelease: ${{ inputs.prerelease == 'true' || github.event.inputs.prerelease == 'true' }}
+          files: |
+            release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  changelog:
+    name: Generate changelog
+    runs-on: ubuntu-22.04
+    needs: release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          PREV_TAG=$(git describe --abbrev=0 --tags "$(git rev-list --tags --skip=1 --max-count=1)" 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update release with changelog
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.changelog.outputs.version }}
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
