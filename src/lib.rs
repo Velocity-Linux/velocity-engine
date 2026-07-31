@@ -8,7 +8,7 @@ pub mod dbus;
 pub mod detector;
 pub mod error;
 pub mod logging;
-pub mod optimizer;
+pub mod optimizer;  
 pub mod profiles;
 pub mod system;
 

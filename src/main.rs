@@ -1,7 +1,5 @@
 use clap::Parser;
 use signal_hook::consts::{SIGINT, SIGTERM};
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 use tracing::{error, info};
 
 use velocity_engine::config::loader::ConfigLoader;
