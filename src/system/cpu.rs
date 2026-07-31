@@ -177,7 +177,7 @@ impl SystemUtils {
         Ok(())
     }
 
-    fn parse_cpu_list(s: &str) -> Vec<usize> {
+    pub fn parse_cpu_list(s: &str) -> Vec<usize> {
         let mut cpus = Vec::new();
         for part in s.split(',') {
             if part.contains('-') {

@@ -37,6 +37,9 @@ pub enum EngineError {
 
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
+
+    #[error("D-Bus proxy error: {0}")]
+    Zbus(#[from] zbus::Error),
 }
 
 pub type Result<T> = std::result::Result<T, EngineError>;

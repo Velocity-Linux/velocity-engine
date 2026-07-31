@@ -19,7 +19,7 @@ struct Args {
     verbose: bool,
 }
 
-static SHUTDOWN: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+static SHUTDOWN: std::sync::LazyLock<std::sync::Arc<std::sync::atomic::AtomicBool>> = std::sync::LazyLock::new(|| std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)));
 
 #[tokio::main]
 async fn main() {
@@ -58,7 +58,7 @@ async fn run(args: Args) -> Result<()> {
     Ok(())
 }
 
-async fn load_config(path: &str) -> Result<crate::config::types::Config> {
+async fn load_config(path: &str) -> Result<velocity_engine::config::types::Config> {
     let loader = ConfigLoader::new(path).await?;
     let config = loader.get().await.clone();
     Ok(config)

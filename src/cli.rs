@@ -82,7 +82,7 @@ async fn handle_profile_activate(conn: &Connection, name: &str) -> Result<()> {
     )
     .await?;
 
-    proxy.call::<(), (), ()>("ActivateProfile", &(name,)).await?;
+    proxy.call("ActivateProfile", &(name,)).await?;
     println!("Profile '{}' activated", name);
     Ok(())
 }
@@ -113,7 +113,7 @@ async fn handle_reload(conn: &Connection) -> Result<()> {
     )
     .await?;
 
-    proxy.call::<(), (), ()>("ReloadConfiguration", &()).await?;
+    proxy.call("ReloadConfiguration", &()).await?;
     println!("Configuration reloaded");
     Ok(())
 }
