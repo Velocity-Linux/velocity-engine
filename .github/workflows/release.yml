@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -50,18 +52,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y musl-tools
 
-      - name: Extract version from tag or dispatch input
+      - name: Extract version from tag, dispatch input, or generate snapshot
         id: version
         run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
-          else
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            # Branch push snapshot: use current Cargo version plus short sha
+            BASE_VERSION=$(grep -E '^version = "[^"]+"' Cargo.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '\n')
+            VERSION="${BASE_VERSION}-snapshot.${SHORT_SHA}"
           fi
+
+          # Strip leading v if present for Cargo.toml
           CARGO_VERSION="${VERSION#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "cargo_version=${CARGO_VERSION}" >> "$GITHUB_OUTPUT"
           echo "CARGO_VERSION=${CARGO_VERSION}" >> "$GITHUB_ENV"
+          echo "is_snapshot=${{ github.event_name == 'push' && github.ref_type != 'tag' }}" >> "$GITHUB_ENV"
 
       - name: Build release binaries
         run: |
@@ -71,7 +82,7 @@ jobs:
         run: |
           mkdir -p release
           BIN_DIR="target/${{ matrix.target }}/release"
-          tar -czf "release/${{ matrix.artifact }}" \
+          tar -czf "release/${{ artifact }}" \
             -C "$BIN_DIR" velocity-engine \
             -C "$BIN_DIR" velocityctl
 
@@ -85,7 +96,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
-          prerelease: ${{ inputs.prerelease == 'true' || github.event.inputs.prerelease == 'true' }}
+          prerelease: ${{ env.is_snapshot == 'true' || inputs.prerelease == 'true' || github.event.inputs.prerelease == 'true' }}
           files: |
             release/*
         env:
@@ -95,6 +106,7 @@ jobs:
     name: Generate changelog
     runs-on: ubuntu-22.04
     needs: release
+    if: ${{ github.event_name != 'push' || github.ref_type == 'tag' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
