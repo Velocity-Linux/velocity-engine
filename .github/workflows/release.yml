@@ -30,8 +30,10 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             artifact: velocity-engine-x86_64-unknown-linux-gnu.tar.gz
+            required: true
           - target: x86_64-unknown-linux-musl
             artifact: velocity-engine-x86_64-unknown-linux-musl.tar.gz
+            required: false
 
     steps:
       - name: Checkout repository
@@ -51,6 +53,10 @@ jobs:
 
       - name: Ensure target is installed
         run: rustup target add ${{ matrix.target }}
+
+      - name: Configure musl linker
+        if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+        run: echo 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc' >> "$GITHUB_ENV"
 
       - name: Determine version
         id: version
