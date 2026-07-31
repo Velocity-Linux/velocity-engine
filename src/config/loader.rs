@@ -10,7 +10,7 @@ use tracing::{error, info, warn};
 pub struct ConfigLoader {
     path: PathBuf,
     config: RwLock<Config>,
-    watcher: Option<RecommendedWatcher>,
+    _watcher: Option<RecommendedWatcher>,
 }
 
 impl ConfigLoader {

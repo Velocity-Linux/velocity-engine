@@ -1,13 +1,13 @@
 use clap::Parser;
 use signal_hook::consts::{SIGINT, SIGTERM};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use tracing::{error, info};
 
-use crate::config::loader::ConfigLoader;
-use crate::daemon::DaemonService;
-use crate::error::Result;
-use crate::logging;
+use velocity_engine::config::loader::ConfigLoader;
+use velocity_engine::daemon::DaemonService;
+use velocity_engine::error::Result;
+use velocity_engine::logging;
 
 #[derive(Parser)]
 #[command(name = "velocity-engine")]
@@ -19,7 +19,7 @@ struct Args {
     verbose: bool,
 }
 
-static SHUTDOWN: AtomicBool = AtomicBool::new(false);
+static SHUTDOWN: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 
 #[tokio::main]
 async fn main() {
@@ -66,6 +66,6 @@ async fn load_config(path: &str) -> Result<crate::config::types::Config> {
 
 fn setup_signal_handlers() {
     for sig in [SIGINT, SIGTERM] {
-        let _ = signal_hook::flag::register(sig, SHUTDOWN);
+        let _ = signal_hook::flag::register(sig, SHUTDOWN.clone());
     }
 }

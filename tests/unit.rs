@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use velocity_engine::config::types::{Config, GameRule, ProfileConfig};
+    use velocity_engine::detector::GameDetector;
+    use velocity_engine::profiles::ProfileManager;
+    use velocity_engine::system::SystemUtils;
     use std::collections::HashMap;
 
     #[test]

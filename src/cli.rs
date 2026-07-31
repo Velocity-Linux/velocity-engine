@@ -1,4 +1,4 @@
-use crate::error::Result;
+use velocity_engine::error::Result;
 use clap::{Parser, Subcommand};
 use zbus::Connection;
 
@@ -39,7 +39,7 @@ enum GamesAction {
 async fn get_dbus_connection() -> Result<Connection> {
     Connection::system()
         .await
-        .map_err(|e| crate::error::EngineError::DBus(format!("Cannot connect to D-Bus: {}", e)))
+        .map_err(|e| velocity_engine::error::EngineError::DBus(format!("Cannot connect to D-Bus: {}", e)))
 }
 
 async fn handle_status(conn: &Connection) -> Result<()> {
@@ -82,7 +82,7 @@ async fn handle_profile_activate(conn: &Connection, name: &str) -> Result<()> {
     )
     .await?;
 
-    proxy.call("ActivateProfile", &(name,)).await?;
+    proxy.call::<(), (), ()>("ActivateProfile", &(name,)).await?;
     println!("Profile '{}' activated", name);
     Ok(())
 }
@@ -113,7 +113,7 @@ async fn handle_reload(conn: &Connection) -> Result<()> {
     )
     .await?;
 
-    proxy.call("ReloadConfiguration", &()).await?;
+    proxy.call::<(), (), ()>("ReloadConfiguration", &()).await?;
     println!("Configuration reloaded");
     Ok(())
 }
