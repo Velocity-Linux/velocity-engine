@@ -11,7 +11,7 @@ makedepends=('cargo' 'rust' 'pkg-config' 'dbus')
 provides=("${pkgname}")
 conflicts=("${pkgname}")
 backup=("etc/velocity-engine/default.toml")
-install="velocity-engine.install"
+install=".packaging/velocity-engine.install"
 source=("${pkgname}::git+https://github.com/velocity-os/velocity-engine.git")
 sha256sums=('SKIP')
 

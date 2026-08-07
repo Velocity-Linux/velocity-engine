@@ -14,7 +14,7 @@ pkgbase = velocity-engine
 	provides = velocity-engine
 	conflicts = velocity-engine
 	backup = etc/velocity-engine/default.toml
-	install = velocity-engine.install
+	install = .packaging/velocity-engine.install
 	source = velocity-engine::git+https://github.com/velocity-os/velocity-engine.git
 	sha256sums = SKIP
 
