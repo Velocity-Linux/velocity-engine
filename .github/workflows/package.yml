@@ -20,6 +20,8 @@ jobs:
   build-package:
     name: Build Arch Linux Package
     runs-on: ubuntu-22.04
+    container:
+      image: archlinux/archlinux:latest
 
     steps:
       - name: Checkout repository
@@ -29,14 +31,16 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm \
             base-devel \
+            git \
             cargo \
             rust \
             pkg-config \
+            dbus \
             libdbus-1-dev \
-            devtools
+            sudo
 
       - name: Determine version from tag or source
         id: version
@@ -60,40 +64,11 @@ jobs:
       - name: Generate .SRCINFO
         shell: bash
         run: |
-          if command -v makepkg >/dev/null 2>&1; then
-            makepkg --printsrcinfo > .SRCINFO || true
-          else
-            echo "Generating .SRCINFO manually"
-            cat > .SRCINFO << 'EOF'
-pkgbase = velocity-engine
-	pkgdesc = Core optimization daemon for Velocity OS
-	pkgver = ${{ steps.version.outputs.version }}
-	pkgrel = 1
-	url = https://github.com/velocity-os/velocity-engine
-	arch = x86_64
-	license = GPL-3.0-only
-	depends = dbus
-	depends = power-profiles-daemon
-	makedepends = cargo
-	makedepends = rust
-	makedepends = pkg-config
-	makedepends = dbus
-	makedepends = libdbus-1-dev
-	provides = velocity-engine
-	conflicts = velocity-engine
-	backup = etc/velocity-engine/default.toml
-	install = velocity-engine.install
-	source = velocity-engine::git+https://github.com/velocity-os/velocity-engine.git
-	sha256sums = SKIP
-
-pkgname = velocity-engine
-EOF
-          fi
+          makepkg --printsrcinfo > .SRCINFO
 
       - name: Build package
         shell: bash
         run: |
-          sudo pacman -Sy --noconfirm
           makepkg -s --noconfirm
 
       - name: Upload package artifacts

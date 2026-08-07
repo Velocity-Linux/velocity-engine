@@ -1,4 +1,4 @@
-# Main binary
+# Maintainer: Velocity OS Team <team@velocity-os.org>
 pkgname=velocity-engine
 pkgver=0.1.0
 pkgrel=1
@@ -27,7 +27,7 @@ build() {
 
 check() {
   cd "${srcdir}/${pkgname}"
-  cargo test --lib
+  CARGO_TARGET_DIR="${srcdir}/${pkgname}/target-test" cargo test --lib
 }
 
 package() {
