@@ -41,6 +41,12 @@ jobs:
             dbus \
             sudo
 
+      - name: Create non-root builder user
+        run: |
+          useradd -m -G wheel -s /bin/bash builder
+          echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder /github/workspace
+
       - name: Determine version from tag or source
         id: version
         shell: bash
@@ -63,12 +69,12 @@ jobs:
       - name: Generate .SRCINFO
         shell: bash
         run: |
-          makepkg --printsrcinfo > .SRCINFO
+          sudo -u builder makepkg --printsrcinfo > .SRCINFO
 
       - name: Build package
         shell: bash
         run: |
-          makepkg -s --noconfirm
+          sudo -u builder makepkg -s --noconfirm
 
       - name: Upload package artifacts
         uses: softprops/action-gh-release@v1
