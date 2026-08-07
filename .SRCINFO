@@ -11,7 +11,6 @@ pkgbase = velocity-engine
 	makedepends = rust
 	makedepends = pkg-config
 	makedepends = dbus
-	makedepends = libdbus-1-dev
 	provides = velocity-engine
 	conflicts = velocity-engine
 	backup = etc/velocity-engine/default.toml

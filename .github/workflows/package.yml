@@ -39,7 +39,6 @@ jobs:
             rust \
             pkg-config \
             dbus \
-            libdbus-1-dev \
             sudo
 
       - name: Determine version from tag or source
