@@ -45,7 +45,7 @@ jobs:
         run: |
           useradd -m -G wheel -s /bin/bash builder
           echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          chown -R builder:builder /github/workspace
+          chown -R builder:builder "${{ github.workspace }}"
 
       - name: Determine version from tag or source
         id: version
